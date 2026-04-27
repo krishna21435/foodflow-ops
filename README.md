@@ -22,6 +22,12 @@ The system will be accessible at:
 - **API Gateway**: http://localhost:8000
 - **RabbitMQ**: http://localhost:15672 (guest/guest)
 
+## ⚙️ Environment Configuration
+A `.env.example` file is provided in the root directory. To configure your environment:
+1. Copy the example file: `cp .env.example .env`
+2. Update the variables with your local or production credentials.
+3. Each service will automatically prioritize these variables over defaults.
+
 ## 🔑 Demo Accounts
 All passwords are `123456`.
 
