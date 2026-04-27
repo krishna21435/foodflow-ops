@@ -1,7 +1,5 @@
 databases:
   - name: foodflow-db
-    databaseName: foodflow_db
-    user: admin
     plan: free
 
 services:
