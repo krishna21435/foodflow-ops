@@ -1,30 +1,9 @@
+databases:
+  - name: foodflow-db
+    plan: free
+
 services:
-  # 1. Infrastructure
-  - type: private_service
-    name: postgres
-    runtime: image
-    image: postgres:15
-    plan: free
-    envVars:
-      - key: POSTGRES_USER
-        value: admin
-      - key: POSTGRES_PASSWORD
-        value: password
-      - key: POSTGRES_DB
-        value: foodflow_db
-
-  - type: private_service
-    name: rabbitmq
-    runtime: image
-    image: rabbitmq:3-management
-    plan: free
-    envVars:
-      - key: RABBITMQ_DEFAULT_USER
-        value: guest
-      - key: RABBITMQ_DEFAULT_PASS
-        value: guest
-
-  # 2. Microservices
+  # 1. Microservices
   - type: web
     name: auth-service
     runtime: docker
@@ -32,7 +11,9 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql://admin:password@postgres:5432/foodflow_db
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
 
@@ -43,9 +24,11 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql://admin:password@postgres:5432/foodflow_db
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
       - key: RABBITMQ_URL
-        value: amqp://guest:guest@rabbitmq:5672
+        sync: false # You will provide this from CloudAMQP
 
   - type: web
     name: restaurant-service
@@ -54,9 +37,11 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql://admin:password@postgres:5432/foodflow_db
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
       - key: RABBITMQ_URL
-        value: amqp://guest:guest@rabbitmq:5672
+        sync: false
 
   - type: web
     name: delivery-service
@@ -65,9 +50,11 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql://admin:password@postgres:5432/foodflow_db
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
       - key: RABBITMQ_URL
-        value: amqp://guest:guest@rabbitmq:5672
+        sync: false
 
   - type: web
     name: ops-service
@@ -76,11 +63,13 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: postgresql://admin:password@postgres:5432/foodflow_db
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
       - key: RABBITMQ_URL
-        value: amqp://guest:guest@rabbitmq:5672
+        sync: false
 
-  # 3. API Gateway
+  # 2. API Gateway
   - type: web
     name: gateway
     runtime: docker
@@ -88,17 +77,32 @@ services:
     plan: free
     envVars:
       - key: AUTH_SERVICE_URL
-        value: http://auth-service:3001
+        fromService:
+          type: web
+          name: auth-service
+          property: host
       - key: ORDER_SERVICE_URL
-        value: http://order-service:3002
+        fromService:
+          type: web
+          name: order-service
+          property: host
       - key: RESTAURANT_SERVICE_URL
-        value: http://restaurant-service:3003
+        fromService:
+          type: web
+          name: restaurant-service
+          property: host
       - key: DELIVERY_SERVICE_URL
-        value: http://delivery-service:3004
+        fromService:
+          type: web
+          name: delivery-service
+          property: host
       - key: OPS_SERVICE_URL
-        value: http://ops-service:3005
+        fromService:
+          type: web
+          name: ops-service
+          property: host
 
-  # 4. Frontend
+  # 3. Frontend
   - type: web
     name: frontend
     runtime: docker
