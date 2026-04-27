@@ -1,11 +1,11 @@
-services:
-  # 1. Databases & Infrastructure
-  - type: database
-    name: foodflow-db
+databases:
+  - name: foodflow-db
     databaseName: foodflow_db
     user: admin
     plan: free
 
+services:
+  # 1. Infrastructure
   - type: pvt
     name: rabbitmq
     runtime: docker
