@@ -6,7 +6,7 @@ databases:
 
 services:
   # 1. Infrastructure
-  - type: pvt
+  - type: psrv
     name: rabbitmq
     runtime: docker
     plan: free
