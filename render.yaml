@@ -1,6 +1,6 @@
 services:
   # 1. Infrastructure
-  - type: psrv
+  - type: private_service
     name: postgres
     runtime: image
     image: postgres:15
@@ -13,7 +13,7 @@ services:
       - key: POSTGRES_DB
         value: foodflow_db
 
-  - type: psrv
+  - type: private_service
     name: rabbitmq
     runtime: image
     image: rabbitmq:3-management
