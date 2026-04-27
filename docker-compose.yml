@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Infrastructure
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: foodflow_db
+    volumes:
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+
+  # API Gateway
+  gateway:
+    build: ./api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - ORDER_SERVICE_URL=http://order-service:3002
+      - RESTAURANT_SERVICE_URL=http://restaurant-service:3003
+      - DELIVERY_SERVICE_URL=http://delivery-service:3004
+      - OPS_SERVICE_URL=http://ops-service:3005
+    depends_on:
+      - auth-service
+
+  # Microservices
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/auth_db
+      - JWT_SECRET=supersecret
+    depends_on:
+      - postgres
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/order_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  restaurant-service:
+    build: ./services/restaurant-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/restaurant_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  delivery-service:
+    build: ./services/delivery-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/delivery_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  ops-service:
+    build: ./services/ops-tracker-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/ops_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  # Frontend
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_GATEWAY_URL=http://localhost:8000
+      - VITE_SOCKET_URL=http://localhost:3005
+    depends_on:
+      - gateway
+      - ops-service
