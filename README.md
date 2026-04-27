@@ -10,6 +10,13 @@ Ensure you have **Docker** and **Docker Compose** installed.
 docker-compose up --build
 ```
 
+### 🎮 Demo Mode (No Docker required)
+If you don't have Docker installed, you can still explore the frontend with demo data:
+1. Navigate to the `frontend/` directory.
+2. Run `npm install` and `npm run dev`.
+3. Use the **Quick Demo Login** buttons on the login page to access different dashboards.
+4. The system will automatically inject sample data (restaurants, orders, rider tasks) since the backend is unreachable.
+
 The system will be accessible at:
 - **Frontend**: http://localhost:3000
 - **API Gateway**: http://localhost:8000
