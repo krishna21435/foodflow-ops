@@ -1,0 +1,119 @@
+services:
+  # 1. Databases & Infrastructure
+  - type: database
+    name: foodflow-db
+    databaseName: foodflow_db
+    user: admin
+    plan: free
+
+  - type: pvt
+    name: rabbitmq
+    runtime: docker
+    plan: free
+    envVars:
+      - key: RABBITMQ_DEFAULT_USER
+        value: guest
+      - key: RABBITMQ_DEFAULT_PASS
+        value: guest
+
+  # 2. Microservices
+  - type: web
+    name: auth-service
+    runtime: docker
+    rootDir: services/auth-service
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: order-service
+    runtime: docker
+    rootDir: services/order-service
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
+      - key: RABBITMQ_URL
+        value: amqp://guest:guest@rabbitmq:5672
+
+  - type: web
+    name: restaurant-service
+    runtime: docker
+    rootDir: services/restaurant-service
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
+      - key: RABBITMQ_URL
+        value: amqp://guest:guest@rabbitmq:5672
+
+  - type: web
+    name: delivery-service
+    runtime: docker
+    rootDir: services/delivery-service
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
+      - key: RABBITMQ_URL
+        value: amqp://guest:guest@rabbitmq:5672
+
+  - type: web
+    name: ops-service
+    runtime: docker
+    rootDir: services/ops-tracker-service
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: foodflow-db
+          property: connectionString
+      - key: RABBITMQ_URL
+        value: amqp://guest:guest@rabbitmq:5672
+
+  # 3. API Gateway
+  - type: web
+    name: gateway
+    runtime: docker
+    rootDir: api-gateway
+    plan: free
+    envVars:
+      - key: AUTH_SERVICE_URL
+        value: http://auth-service:3001
+      - key: ORDER_SERVICE_URL
+        value: http://order-service:3002
+      - key: RESTAURANT_SERVICE_URL
+        value: http://restaurant-service:3003
+      - key: DELIVERY_SERVICE_URL
+        value: http://delivery-service:3004
+      - key: OPS_SERVICE_URL
+        value: http://ops-service:3005
+
+  # 4. Frontend
+  - type: web
+    name: frontend
+    runtime: docker
+    rootDir: frontend
+    plan: free
+    envVars:
+      - key: VITE_GATEWAY_URL
+        fromService:
+          type: web
+          name: gateway
+          property: url
+      - key: VITE_SOCKET_URL
+        fromService:
+          type: web
+          name: ops-service
+          property: url
