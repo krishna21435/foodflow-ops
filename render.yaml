@@ -110,12 +110,6 @@ services:
     plan: free
     envVars:
       - key: VITE_GATEWAY_URL
-        fromService:
-          type: web
-          name: gateway
-          property: url
+        sync: false # You will paste the public Gateway URL here
       - key: VITE_SOCKET_URL
-        fromService:
-          type: web
-          name: ops-service
-          property: url
+        sync: false # You will paste the public Ops Service URL here
